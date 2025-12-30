@@ -1,0 +1,30 @@
+name: Secure Deploy
+on:
+  push:
+    branches: [main]
+
+# Essential permissions for GitHub Pages to work
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Inject API Key
+        # This replaces the placeholder with your GitHub Secret
+        run: |
+          sed -i "s/__API_KEY_PLACEHOLDER__/${{ secrets.GEMINI_API_KEY }}/g" index.html
+          
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
+          branch: gh-pages
+
+          
