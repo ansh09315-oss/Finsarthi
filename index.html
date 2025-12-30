@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finsarthi - Smart Financial Guide</title>
+    
+    <!-- LIBRARIES -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* TABLE STYLES */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; font-size: 0.9rem; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        th { background-color: #1e40af; color: white; padding: 12px; text-align: left; }
+        td { border-bottom: 1px solid #e2e8f0; padding: 10px; color: #334155; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        a { color: #1d4ed8; font-weight: bold; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Important for View Switching */
+        .hidden-section { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* CHATBOT ANIMATIONS */
+        .chat-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* Custom Scrollbar for options */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- ======================================================= -->
+    <!-- VIEW 1: FULL SCREEN LOGIN PAGE (Disappears after login) -->
+    <!-- ======================================================= -->
+    <div id="login-view" class="fixed inset-0 z-50 bg-white flex flex-col justify-center items-center fade-in">
+        <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md border border-slate-100 text-center">
+            <div class="w-16 h-16 bg-blue-700 rounded-2xl flex items-center justify-center text-white font-extrabold text-3xl shadow-xl mx-auto mb-6">F</div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Welcome to Finsarthi</h1>
+            <p class="text-slate-500 mb-8">India's Smartest Financial Guide</p>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Full Name</label>
+                    <input type="text" id="login-name" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Ansh">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Annual Income (₹)</label>
+                    <input type="number" id="login-income" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 800000">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Credit Score</label>
+                    <input type="number" id="login-score" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 750">
+                </div>
+            </div>
+
+            <button onclick="handleLogin()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg mt-8 hover:bg-blue-700 transition shadow-lg">
+                Create Secure Account
+            </button>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- VIEW 2: MAIN DASHBOARD (Visible only after login)       -->
+    <!-- ======================================================= -->
+    <div id="dashboard-view" class="hidden-section pb-20">
+
+        <!-- HEADER -->
+        <header id="app-header" class="bg-white shadow-md sticky top-0 z-40 backdrop-blur-md bg-opacity-95">
+            <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showSection('home')">
+                    <div class="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-lg">F</div>
+                    <div>
+                        <h1 class="text-xl font-extrabold text-slate-800">Finsarthi <span class="text-blue-700">
+                            
+                        </span></h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <!-- LANGUAGE TOGGLE -->
+                    <button id="lang-btn" onclick="toggleLanguage()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-language"></i> <span id="lang-text">English</span>
+                    </button>
+                    
+                    <div class="hidden md:flex px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 items-center gap-1 border border-emerald-200">
+                        <i class="fa-solid fa-link"></i> Active
+                    
+                    </div>
+                    <button onclick="logout()" class="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1 rounded transition">LOGOUT</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTAINER -->
+        <main class="max-w-6xl mx-auto px-4 py-8">
+
+            <!-- 1. HOME DASHBOARD -->
+            <div id="home" class="hidden-section fade-in">
+                <div class="bg-gradient-to-br from-blue-900 to-slate-800 text-white p-8 rounded-3xl shadow-2xl mb-10 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h1 class="text-3xl font-bold mb-3">Namaste, <span id="display-name" class="text-blue-300">User</span>.</h1>
+                        <p class="text-slate-300 mb-6 max-w-xl">I have upgraded your dashboard. Use the new <b>AI Calculators</b> and <b>Yojana Finder</b> for personalized advice.</p>
+                        <div class="flex gap-3">
+                            <button onclick="showSection('profile')" class="bg-white/20 hover:bg-white/30 text-white border border-white/50 px-6 py-2 rounded-lg font-bold transition flex items-center gap-2 backdrop-blur-sm">
+                                <i class="fa-solid fa-user-pen"></i> Profile
+                            </button>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-robot absolute -bottom-10 -right-10 text-9xl text-white/5 rotate-12"></i>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- SARKARI YOJANA -->
+                    <div onclick="openService('yojana')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group border-t-4 border-orange-500">
+                        <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition"><i class="fa-solid fa-landmark"></i></div>
+                        <h3 class="font-bold text-xl mb-1">Sarkari Yojana</h3>
+                        <p class="text-sm text-slate-500">Find Govt Schemes & Subsidies</p>
+                    </div>
+
+                    <!-- AI CALCULATORS -->
+                     <div onclick="openService('calculator')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group border-t-4 border-purple-500">
+                        <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <h3 class="font-bold text-xl mb-1">Smart Calculators</h3>
+                        <p class="text-sm text-slate-500">AI-Enhanced EMI, SIP & Tax</p>
+                    </div>
+
+                    <!-- Loan Expert -->
+                    <div onclick="openService('loans')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group border-t-4 border-blue-500">
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition"><i class="fa-solid fa-building-columns"></i></div>
+                        <h3 class="font-bold text-xl mb-1">Loan Expert</h3>
+                        <p class="text-sm text-slate-500">Home, Car, Gold Loans...</p>
+                    </div>
+
+                    <!-- Investments -->
+                    <div onclick="openService('investment')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group border-t-4 border-emerald-500">
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition"><i class="fa-solid fa-chart-line"></i></div>
+                        <h3 class="font-bold text-xl mb-1">Investments</h3>
+                        <p class="text-sm text-slate-500">FD, SIP, Gold, Stocks...</p>
+                    </div>
+
+                    <!-- Insurance -->
+                    <div onclick="openService('insurance')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group border-t-4 border-rose-500">
+                        <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition"><i class="fa-solid fa-shield-heart"></i></div>
+                        <h3 class="font-bold text-xl mb-1">Insurance</h3>
+                        <p class="text-sm text-slate-500">Health, Life, Term...</p>
+                    </div>
+
+                    <!-- Scam Check -->
+                    <div onclick="showSection('scam')" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-xl hover:-translate-y-1 transition group border-t-4 border-amber-500">
+                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition"><i class="fa-solid fa-user-secret"></i></div>
+                        <h3 class="font-bold text-xl mb-1">Scam Check</h3>
+                        <p class="text-sm text-slate-500">Fake SMS/Call Detector</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. PROFILE -->
+            <div id="profile" class="hidden-section fade-in">
+                <button onclick="showSection('home')" class="mb-6 text-slate-500 font-bold hover:text-blue-700 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Home</button>
+                <div class="bg-white p-8 rounded-3xl shadow-lg max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6">User Database Record</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="input-name" class="w-full p-4 bg-slate-50 border rounded-xl" placeholder="Name">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="input-income" class="w-full p-4 bg-slate-50 border rounded-xl" placeholder="Income">
+                            <input type="number" id="input-score" class="w-full p-4 bg-slate-50 border rounded-xl" placeholder="Credit Score">
+                        </div>
+                        <button onclick="saveProfile()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">Update Record</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. SERVICES (The Main Engine) -->
+            <div id="service-page" class="hidden-section fade-in">
+                <button onclick="showSection('home')" class="mb-4 text-slate-500 font-bold hover:text-blue-700"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden min-h-[600px] flex flex-col">
+                    <div id="service-header" class="p-8 text-white bg-blue-700">
+                        <h2 id="service-title" class="text-2xl font-bold">Service</h2>
+                        <p id="service-subtitle" class="text-white/80 text-sm">Select a specific category below</p>
+                    </div>
+                    <div class="p-8 flex-1">
+                        
+                        <!-- CATEGORY SELECTION -->
+                        <div id="selection-area">
+                            <div id="options-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8 max-h-[400px] overflow-y-auto custom-scroll p-1"></div>
+                            
+                            <!-- DYNAMIC CALCULATOR INPUTS -->
+                            <div id="calculator-inputs" class="hidden mb-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in fade-in">
+                                <h3 class="font-bold text-slate-700 mb-4"><i class="fa-solid fa-pen-to-square"></i> Enter Details for Calculation:</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 uppercase">Amount (₹)</label>
+                                        <input type="number" id="calc-amount" class="w-full p-3 border rounded-lg mt-1" placeholder="e.g. 5000000">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 uppercase">Interest / Return (%)</label>
+                                        <input type="number" id="calc-rate" class="w-full p-3 border rounded-lg mt-1" placeholder="e.g. 8.5">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 uppercase">Duration (Years)</label>
+                                        <input type="number" id="calc-time" class="w-full p-3 border rounded-lg mt-1" placeholder="e.g. 20">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="action-area" class="text-center hidden pt-4 border-t border-slate-100">
+                                <h3 class="text-lg font-bold text-slate-700 mb-4">Selected: <span id="selected-display" class="text-blue-700"></span></h3>
+                                <button onclick="runAdvancedAnalysis(false)" class="bg-blue-700 text-white px-10 py-4 rounded-full font-bold shadow-xl hover:scale-105 transition flex items-center gap-2 mx-auto">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="action-btn-text">Generate Report</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- LOADING -->
+                        <div id="loading-spinner" class="hidden py-20 text-center">
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-700 mb-4"></i>
+                            <p class="font-bold text-lg">Finsarthi AI is analyzing...</p>
+                            <p class="text-sm text-slate-500">Language Mode: <span id="lang-loading">English</span></p>
+                        </div>
+
+                        <!-- RESULTS -->
+                        <div id="result-area" class="hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-xl text-slate-800">AI Analysis</h3>
+                                <button onclick="resetService()" class="text-sm font-bold text-blue-700 hover:underline">New Search</button>
+                            </div>
+                            
+                            <!-- Table Output -->
+                            <div id="markdown-output" class="prose max-w-none text-sm overflow-x-auto mb-6"></div>
+
+                            <!-- Smart Actions -->
+                            <div id="alternative-options" class="flex flex-col md:flex-row gap-4 justify-center items-center p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                                <div class="text-center md:text-left flex-1">
+                                    <h4 class="font-bold text-slate-700"><i class="fa-solid fa-lightbulb text-yellow-500"></i> Want different options?</h4>
+                                    <p class="text-xs text-slate-500">Click below for alternatives.</p>
+                                </div>
+                                <button onclick="runAdvancedAnalysis(true)" class="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded-lg font-bold hover:bg-slate-100 transition shadow-sm whitespace-nowrap">
+                                    <i class="fa-solid fa-shuffle"></i> Show Different Options
+                                </button>
+                            </div>
+
+                            <!-- AI PRO TIP -->
+                            <div id="ai-tip-box" class="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl text-blue-900 text-sm hidden">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. SCAM DETECTOR -->
+            <div id="scam" class="hidden-section fade-in">
+                <button onclick="showSection('home')" class="mb-4 text-slate-500 font-bold"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <div class="bg-white p-8 rounded-3xl shadow-xl border-l-4 border-amber-500">
+                    <h2 class="text-2xl font-bold mb-4">Scam Detective</h2>
+                    <textarea id="scam-input" class="w-full p-4 bg-amber-50 border border-amber-200 rounded-xl h-40 mb-4" placeholder="Paste suspicious message..."></textarea>
+                    <button onclick="checkScam()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">Analyze</button>
+                    <div id="scam-result" class="hidden mt-6 p-6 bg-slate-50 border rounded-xl"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- FLOATING CHATBOT -->
+        <div id="chatbot-container" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+            <div id="chat-window" class="hidden bg-white w-80 h-96 rounded-2xl shadow-2xl border border-gray-200 mb-3 flex flex-col overflow-hidden">
+                <div class="bg-blue-700 p-4 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="fa-solid fa-robot text-sm"></i></div>
+                        <div>
+                            <h4 class="font-bold text-sm">Finsarthi AI</h4>
+                            <p class="text-[10px] opacity-80">Hinglish Supported</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleChat()" class="hover:bg-white/20 p-1 rounded"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-3">
+                    <div class="flex justify-start">
+                        <div class="bg-white border border-gray-200 p-3 rounded-2xl rounded-tl-none text-sm shadow-sm max-w-[85%]">
+                            Namaste! I am ready to help. Ask me in English or Hindi.
+                        </div>
+                    </div>
+                </div>
+                <div class="p-3 bg-white border-t border-gray-100">
+                    <form onsubmit="sendChatMessage(event)" class="flex gap-2">
+                        <input id="chat-input" type="text" class="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-700" placeholder="Ask a question...">
+                        <button type="submit" class="bg-blue-700 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-800"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                    </form>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="bg-blue-700 hover:bg-blue-800 text-white p-4 rounded-full shadow-xl transition transform hover:scale-110 flex items-center gap-2">
+                <i class="fa-solid fa-message text-xl"></i>
+                <span class="font-bold pr-1">Chat AI</span>
+            </button>
+        </div>
+
+    </div> <!-- End of Dashboard View -->
+
+    <!-- LOGIC -->
+    <script>
+        // --- CONFIG ---
+let CONFIG = {
+    // This placeholder will be replaced automatically during deployment
+    API_KEY: window.FINS_CONFIG?.API_KEY || "AIzaSyAvqqNbZwyFbPmpxH79cY_TPnvaqzcDWmo", 
+    USER_NAME: "", 
+    INCOME: 0, 
+    SCORE: 0,
+    LANGUAGE: 'English'
+};
+
+        // --- DATABASE LOGIC ---
+        window.onload = function() { checkLoginStatus(); };
+
+        function checkLoginStatus() {
+            const savedData = localStorage.getItem('finsarthi_user_db');
+            if (savedData) {
+                // If logged in: Hide Login View, Show Dashboard
+                const userData = JSON.parse(savedData);
+                CONFIG.USER_NAME = userData.name;
+                CONFIG.INCOME = userData.income;
+                CONFIG.SCORE = userData.score;
+                
+                document.getElementById('display-name').innerText = CONFIG.USER_NAME;
+                document.getElementById('input-name').value = CONFIG.USER_NAME;
+                document.getElementById('input-income').value = CONFIG.INCOME;
+                document.getElementById('input-score').value = CONFIG.SCORE;
+                
+                document.getElementById('login-view').classList.add('hidden-section');
+                document.getElementById('dashboard-view').classList.remove('hidden-section');
+                showSection('home');
+            } else {
+                // If NOT logged in: Show Login View, Hide Dashboard
+                document.getElementById('login-view').classList.remove('hidden-section');
+                document.getElementById('dashboard-view').classList.add('hidden-section');
+            }
+        }
+
+        function handleLogin() {
+            const name = document.getElementById('login-name').value;
+            const income = document.getElementById('login-income').value;
+            const score = document.getElementById('login-score').value;
+            if(!name || !income || !score) { alert("Please fill all details."); return; }
+            
+            // Save data and switch view
+            localStorage.setItem('finsarthi_user_db', JSON.stringify({ name, income, score }));
+            checkLoginStatus(); 
+        }
+
+        function logout() {
+            if(confirm("Logout?")) { 
+                localStorage.removeItem('finsarthi_user_db'); 
+                location.reload(); 
+            }
+        }
+
+        function toggleLanguage() {
+            if (CONFIG.LANGUAGE === 'English') {
+                CONFIG.LANGUAGE = 'Hinglish (Hindi + English)';
+                document.getElementById('lang-text').innerText = 'Hinglish';
+                document.getElementById('lang-btn').className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 text-orange-700 font-bold text-xs hover:bg-orange-200 transition";
+            } else {
+                CONFIG.LANGUAGE = 'English';
+                document.getElementById('lang-text').innerText = 'English';
+                document.getElementById('lang-btn').className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition";
+            }
+        }
+
+        // --- NAVIGATION ---
+        function showSection(id) {
+            ['home', 'profile', 'service-page', 'scam'].forEach(sec => document.getElementById(sec)?.classList.add('hidden-section'));
+            document.getElementById(id)?.classList.remove('hidden-section');
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('input-name').value;
+            const income = document.getElementById('input-income').value;
+            const score = document.getElementById('input-score').value;
+            localStorage.setItem('finsarthi_user_db', JSON.stringify({ name, income, score }));
+            checkLoginStatus();
+            alert("Profile Updated!");
+        }
+
+        // --- GLOBAL STATE ---
+        let currentService = '';
+        let selectedCategory = '';
+
+        // --- SERVICE ENGINE ---
+        function openService(type) {
+            currentService = type;
+            showSection('service-page');
+            resetService();
+            const container = document.getElementById('options-container');
+            const title = document.getElementById('service-title');
+            const header = document.getElementById('service-header');
+            const subtitle = document.getElementById('service-subtitle');
+            const btnText = document.getElementById('action-btn-text');
+            const altOptions = document.getElementById('alternative-options');
+            const calcInputs = document.getElementById('calculator-inputs');
+            
+            container.innerHTML = '';
+            altOptions.classList.remove('hidden'); // Show by default
+            calcInputs.classList.add('hidden'); // Hide calc inputs by default
+
+            let options = [];
+            
+            if(type === 'loans') {
+                title.innerText = "Loan Expert";
+                header.className = "p-8 text-white bg-blue-700";
+                btnText.innerText = "Find Best Loans";
+                options = ['Personal Loan', 'Home Loan', 'Car Loan', 'Gold Loan', 'Education Loan', 'Agri/Kisan Loan', 'Business Loan', 'Mudra Loan', 'Credit Card Loan'];
+            } else if(type === 'investment') {
+                title.innerText = "Investment Guru";
+                header.className = "p-8 text-white bg-emerald-600";
+                btnText.innerText = "Generate Strategy";
+                options = ['Fixed Deposit (FD)', 'PPF', 'Mutual Funds', 'Stocks', 'Gold / SGB', 'Real Estate', 'NPS', 'ELSS', 'SIP'];
+            } else if(type === 'insurance') {
+                title.innerText = "Insurance Advisor";
+                header.className = "p-8 text-white bg-rose-600";
+                btnText.innerText = "Compare Policies";
+                options = ['Health Insurance', 'Term Life', 'Car Insurance', 'Bike Insurance', 'Ayushman Bharat', 'Crop Insurance', 'Family Floater'];
+            } else if(type === 'yojana') {
+                title.innerText = "Sarkari Yojana Finder";
+                header.className = "p-8 text-white bg-orange-500";
+                subtitle.innerText = "Select a category to find government benefits";
+                btnText.innerText = "Find Schemes";
+                altOptions.classList.add('hidden'); // No alternatives for Govt schemes
+                options = ['Housing (Awas)', 'Education/Scholarship', 'Farmer Subsidies', 'Women Empowerment', 'Health Benefits', 'Small Business (MSME)', 'Pension', 'Ration/Food', 'Start-Up India'];
+            } else if(type === 'calculator') {
+                title.innerText = "AI Financial Calculator";
+                header.className = "p-8 text-white bg-purple-600";
+                subtitle.innerText = "Select a tool to calculate & analyze";
+                btnText.innerText = "Calculate & Analyze";
+                altOptions.classList.add('hidden');
+                options = ['Home Loan EMI', 'Personal Loan EMI', 'SIP Returns', 'PPF Calculator', 'Income Tax (New Regime)', 'FD Returns', 'Retirement Corpus'];
+            }
+
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = "bg-white p-3 rounded-lg border border-slate-200 hover:border-blue-500 cursor-pointer text-center font-bold text-slate-600 text-sm hover:text-blue-700 hover:bg-blue-50 transition shadow-sm flex items-center justify-center min-h-[60px]";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    document.querySelectorAll('#options-container div').forEach(d => d.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-700', 'ring-2', 'ring-blue-200'));
+                    btn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-700', 'ring-2', 'ring-blue-200');
+                    selectedCategory = opt;
+                    document.getElementById('selected-display').innerText = opt;
+                    document.getElementById('action-area').classList.remove('hidden');
+                    
+                    // Show Calculator Inputs if in Calc mode
+                    if(currentService === 'calculator') {
+                         document.getElementById('calculator-inputs').classList.remove('hidden');
+                         // Auto-scroll to inputs
+                         setTimeout(() => document.getElementById('calculator-inputs').scrollIntoView({behavior: 'smooth'}), 100);
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function resetService() {
+            document.getElementById('selection-area').classList.remove('hidden');
+            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('action-area').classList.add('hidden');
+            document.getElementById('ai-tip-box').classList.add('hidden');
+            document.getElementById('calculator-inputs').classList.add('hidden');
+        }
+
+        // --- AI API HANDLER ---
+        async function callGeminiAPI(prompt) {
+            try {
+                if (!CONFIG.API_KEY || CONFIG.API_KEY.length < 10) throw new Error("Invalid API Key");
+
+                const languageInstruction = CONFIG.LANGUAGE === 'Hinglish (Hindi + English)' 
+                    ? "IMPORTANT: Reply in simple Hinglish (Mix of Hindi and English). Example: 'Is loan ka rate kam hai'." 
+                    : "Reply in professional English.";
+
+                const finalPrompt = `${languageInstruction} \n ${prompt}`;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${CONFIG.API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error?.message || `API Error: ${response.status}`);
+
+                if (data.candidates && data.candidates.length > 0) return data.candidates[0].content.parts[0].text;
+                return "No response generated.";
+
+            } catch (error) {
+                return `**Connection Error:** ${error.message}`;
+            }
+        }
+
+        async function runAdvancedAnalysis(isAlternative) {
+            document.getElementById('selection-area').classList.add('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('lang-loading').innerText = CONFIG.LANGUAGE;
+
+            let prompt = "";
+            
+            // --- SPECIFIC PROMPTS ---
+            if (currentService === 'yojana') {
+                prompt = `
+                    Role: Government Scheme Expert for India.
+                    User: ${CONFIG.USER_NAME}, Income ₹${CONFIG.INCOME}.
+                    Topic: ${selectedCategory}.
+                    Task: List 3-4 specific government schemes relevant to this user.
+                    Format: MARKDOWN TABLE ONLY. 
+                    Columns: [Scheme Name] | [Benefit (Amount/Subsidy)] | [Eligibility] | [Official Link].
+                    Use REAL links like startupindia.gov.in, pmaymis.gov.in etc.
+                    After table, add "TIP:" with advice on documents needed.
+                `;
+            } else if (currentService === 'calculator') {
+             // Get Input Values
+                const amount = document.getElementById('calc-amount').value || "Standard";
+                const rate = document.getElementById('calc-rate').value || "Market Rate";
+                const time = document.getElementById('calc-time').value || "Standard";
+
+                prompt = `
+                    Role: Financial Analyst.
+                    User: ${CONFIG.USER_NAME}, Income ₹${CONFIG.INCOME}.
+                    Topic: ${selectedCategory}.
+                    User Inputs: Amount=₹${amount}, Rate=${rate}%, Tenure=${time} Years.
+                    
+                    Task: 
+                    1. CALCULATE the result (EMI, Total Interest, or Maturity Value) using the inputs.
+                    2. Show the mathematical formula used.
+                    3. ANALYZE if this is affordable for the user's income (₹${CONFIG.INCOME}).
+                    
+                    Format: 
+                    - Show the Math clearly in bullet points.
+                    - Show a small Summary Table.
+                    - Give a Verdict: "Affordable" or "Risky".
+                    After analysis, add "TIP:" with advice.
+                `;
+            } else {
+                // Standard Loans/Invest/Insurance
+                let instruction = isAlternative 
+                    ? "User wants ALTERNATIVE options (NBFCs, small banks, different schemes)." 
+                    : "Show top 5 best market standard options.";
+                
+                prompt = `
+                    Role: Financial Advisor.
+                    User: Income ₹${CONFIG.INCOME}, Score ${CONFIG.SCORE}.
+                    Category: ${selectedCategory}.
+                    Constraint: ${instruction}
+                    Format: MARKDOWN TABLE ONLY.
+                    Columns: [Provider] | [Scheme] | [Rate/Return] | [Feature] | [Link].
+                    After table, add "TIP:" with a pro tip.
+                `;
+            }
+            
+            const resultRaw = await callGeminiAPI(prompt);
+            
+            let tableMarkdown = resultRaw;
+            let tipText = "Check terms carefully.";
+            
+            if (resultRaw.includes('TIP:')) {
+                const parts = resultRaw.split('TIP:');
+                tableMarkdown = parts[0];
+                tipText = parts[1] ? parts[1].trim() : tipText;
+            }
+
+            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('markdown-output').innerHTML = marked.parse(tableMarkdown);
+            
+            const tipBox = document.getElementById('ai-tip-box');
+            tipBox.innerHTML = `<b><i class="fa-solid fa-robot"></i> Finsarthi Insight:</b> ${tipText}`;
+            tipBox.classList.remove('hidden');
+        }
+
+        async function checkScam() {
+            const text = document.getElementById('scam-input').value;
+            const res = document.getElementById('scam-result');
+            res.classList.remove('hidden');
+            res.innerText = "Scanning...";
+            const prompt = `Analyze scam: "${text}". Verdict (SAFE or SCAM) + 3 reasons.`;
+            const result = await callGeminiAPI(prompt);
+            res.innerHTML = marked.parse(result);
+        }
+
+        function toggleChat() { document.getElementById('chat-window').classList.toggle('hidden'); }
+
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            const msgContainer = document.getElementById('chat-messages');
+            msgContainer.innerHTML += `<div class="flex justify-end mb-2"><div class="bg-blue-700 text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%]">${msg}</div></div>`;
+            input.value = '';
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            const loadingId = 'typing-' + Date.now();
+            msgContainer.innerHTML += `<div id="${loadingId}" class="flex justify-start mb-2"><div class="bg-white border p-3 rounded-2xl rounded-tl-none text-sm"><div class="flex gap-1"><div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div><div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div><div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div></div></div></div>`;
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            const prompt = `
+                You are Finsarthi AI. 
+                User: ${CONFIG.USER_NAME}, Income: ₹${CONFIG.INCOME}.
+                Topic: ${msg}.
+                Task: Answer helpful queries about Finance, Loans, Insurance, Investments, and **Sarkari Yojana (Government Schemes)**.
+                If asking about government schemes, provide names and benefits.
+                Keep answer short and helpful.
+            `;
+            const reply = await callGeminiAPI(prompt);
+
+            document.getElementById(loadingId).remove();
+            msgContainer.innerHTML += `<div class="flex justify-start mb-2"><div class="bg-white border p-3 rounded-2xl rounded-tl-none text-sm max-w-[85%] prose prose-sm">${marked.parse(reply)}</div></div>`;
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
